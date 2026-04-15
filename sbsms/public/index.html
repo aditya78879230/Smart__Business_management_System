@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SBSMS — Smart Business Service Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+/* ════════════════════════════════════ TOKENS */
+:root{
+  --bg:#FAFAF8;--bg2:#F3F2EE;--bg3:#ECEAE4;
+  --surface:#FFFFFF;--surface2:#F8F7F4;
+  --border:#E2E0D9;--border2:#D0CEC6;
+  --text:#1C1C1A;--text2:#6B6860;--text3:#A8A69E;
+  --accent:#1A6B4A;--accent2:#2D9B6F;--accent-light:#E8F5EE;
+  --gold:#B8860B;--gold-light:#FDF8EC;
+  --red:#C0392B;--red-light:#FDECEA;
+  --blue:#1A5276;--blue-light:#EBF5FB;
+  --font:'Clash Display',sans-serif;
+  --body:'Satoshi',sans-serif;
+  --r:14px;--r2:8px;--r3:20px;
+  --sh:0 2px 12px rgba(0,0,0,.08);
+  --sh2:0 8px 32px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+
+/* ════ LAYOUT ════ */
+.app{display:flex;min-height:100vh}
+.sidebar{width:260px;background:var(--text);color:#fff;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;flex-shrink:0;transition:.3s;z-index:200}
+.sidebar.collapsed{width:0;overflow:hidden}
+.main{flex:1;margin-left:260px;display:flex;flex-direction:column;min-height:100vh;transition:.3s}
+.main.expanded{margin-left:0}
+
+/* ════ SIDEBAR ════ */
+.sb-logo{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-brand{font-family:var(--font);font-size:18px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.sb-tag{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-top:2px}
+.sb-user{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.sb-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.sb-uname{font-size:13px;font-weight:500}
+.sb-urole{font-size:10px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.8px;margin-top:1px}
+.sb-section{padding:16px 20px 6px;font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,.3);text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:12px;padding:10px 20px;font-size:13px;color:rgba(255,255,255,.65);cursor:pointer;transition:.15s;border-left:3px solid transparent;position:relative}
+.sb-item:hover{color:#fff;background:rgba(255,255,255,.05)}
+.sb-item.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:var(--accent2)}
+.sb-icon{font-size:15px;width:20px;text-align:center}
+.sb-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);margin-top:auto}
+
+/* ════ TOPBAR ════ */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.tb-left{display:flex;align-items:center;gap:14px}
+.tb-toggle{width:36px;height:36px;border-radius:var(--r2);border:1px solid var(--border);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
+.tb-title{font-family:var(--font);font-size:17px;font-weight:600;color:var(--text)}
+.tb-right{display:flex;align-items:center;gap:10px}
+.tb-btn{width:38px;height:38px;border-radius:var(--r2);border:1px solid var(--border);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;position:relative;transition:.15s}
+.tb-btn:hover{background:var(--bg2)}
+.tb-notif-dot{position:absolute;top:8px;right:8px;width:7px;height:7px;background:var(--red);border-radius:50%;border:2px solid var(--surface)}
+.tb-avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer}
+
+/* ════ CONTENT ════ */
+.content{padding:28px;flex:1}
+
+/* ════ COMPONENTS ════ */
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px}
+.card-sm{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+
+/* Stat cards */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden}
+.stat-top{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
+.stat-label{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.stat-val{font-family:var(--font);font-size:28px;font-weight:700;color:var(--text);line-height:1}
+.stat-sub{font-size:12px;color:var(--text3);margin-top:6px}
+.stat-emoji{position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:30px;opacity:.1}
+
+/* Grids */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:var(--r2);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:.15s;font-family:var(--body);white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{background:var(--bg2);border-color:var(--border2)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-warn{background:var(--gold);color:#fff}
+.btn-success{background:#27AE60;color:#fff}
+.btn-ghost{background:transparent;color:var(--text2);padding:8px 14px}
+.btn-ghost:hover{color:var(--text);background:var(--bg2)}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-xs{padding:4px 10px;font-size:11px}
+.btn-lg{padding:13px 28px;font-size:15px}
+.w100{width:100%;justify-content:center}
+
+/* Badges */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.2px}
+.badge-green{background:var(--accent-light);color:var(--accent)}
+.badge-gold{background:var(--gold-light);color:var(--gold)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-neutral{background:var(--bg3);color:var(--text2)}
+
+/* Forms */
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-input,.form-select,.form-textarea{width:100%;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);color:var(--text);font-size:14px;font-family:var(--body);outline:none;transition:.15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
+.form-textarea{resize:vertical;min-height:90px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:11px 16px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);border-bottom:2px solid var(--border);background:var(--surface2)}
+.tbl td{padding:13px 16px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg)}
+
+/* Service Cards */
+.svc-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:.2s}
+.svc-card:hover{border-color:var(--accent);box-shadow:var(--sh2);transform:translateY(-3px)}
+.svc-thumb{height:140px;display:flex;align-items:center;justify-content:center;font-size:52px;position:relative}
+.svc-thumb-gym{background:linear-gradient(135deg,#e8f5ee,#c8eadb)}
+.svc-thumb-hostel{background:linear-gradient(135deg,#fdf8f0,#f5e6c8)}
+.svc-thumb-hotel{background:linear-gradient(135deg,#eef5fb,#c8dff5)}
+.svc-thumb-restaurant{background:linear-gradient(135deg,#fdecea,#f5c8c5)}
+.svc-thumb-coaching{background:linear-gradient(135deg,#f3eefb,#ddc8f5)}
+.svc-body{padding:16px}
+.svc-name{font-family:var(--font);font-size:15px;font-weight:600;margin-bottom:4px}
+.svc-meta{font-size:12px;color:var(--text2)}
+.svc-price{font-size:14px;color:var(--accent);font-weight:700;margin-top:8px}
+.svc-stars{color:#E67E22;font-size:12px}
+.verified-badge{position:absolute;top:10px;left:10px;background:var(--accent);color:#fff;font-size:9px;padding:3px 8px;border-radius:10px;font-weight:700}
+
+/* Filter chips */
+.chip-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.chip{padding:6px 16px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:.15s}
+.chip:hover,.chip.active{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* Hero */
+.hero{background:var(--text);color:#fff;border-radius:var(--r);padding:40px;margin-bottom:28px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-60px;right:-60px;width:280px;height:280px;background:var(--accent);border-radius:50%;opacity:.15}
+.hero::after{content:'';position:absolute;bottom:-40px;left:30%;width:180px;height:180px;background:var(--accent2);border-radius:50%;opacity:.1}
+.hero-title{font-family:var(--font);font-size:30px;font-weight:700;margin-bottom:8px;position:relative}
+.hero-sub{color:rgba(255,255,255,.6);font-size:14px;margin-bottom:24px;position:relative}
+.hero-search{display:flex;gap:10px;position:relative;flex-wrap:wrap}
+
+/* Auth pages */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:24px}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;width:420px;max-width:100%;box-shadow:var(--sh2)}
+.auth-logo{text-align:center;margin-bottom:30px}
+.auth-title{font-family:var(--font);font-size:24px;font-weight:700;text-align:center;margin-bottom:6px}
+.auth-sub{text-align:center;color:var(--text2);font-size:14px;margin-bottom:28px}
+.auth-tabs{display:flex;background:var(--bg2);border-radius:var(--r2);padding:4px;margin-bottom:24px}
+.auth-tab{flex:1;text-align:center;padding:8px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:.15s;color:var(--text2)}
+.auth-tab.active{background:var(--surface);color:var(--text);box-shadow:var(--sh)}
+.role-select{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.role-option{border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;cursor:pointer;transition:.15s}
+.role-option:hover,.role-option.active{border-color:var(--accent);background:var(--accent-light)}
+.role-icon{font-size:22px;margin-bottom:4px}
+.role-label{font-size:12px;font-weight:600}
+
+/* Booking cards */
+.bk-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;display:flex;gap:14px}
+.bk-icon{width:48px;height:48px;border-radius:var(--r2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;background:var(--bg2)}
+
+/* Progress */
+.progress{background:var(--bg3);border-radius:4px;height:6px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:.3s}
+
+/* Section head */
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.sec-title{font-family:var(--font);font-size:17px;font-weight:600}
+
+/* Timeline */
+.tl-item{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.tl-body{flex:1}
+.tl-title{font-size:13px;font-weight:500}
+.tl-sub{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* Mini bar chart */
+.bar-wrap{display:flex;align-items:flex-end;gap:8px;height:90px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar-fill{width:100%;border-radius:4px 4px 0 0;transition:.5s}
+.bar-lbl{font-size:10px;color:var(--text3)}
+
+/* Notification panel */
+.notif-panel{position:absolute;right:0;top:46px;width:340px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh2);z-index:300;display:none}
+.notif-panel.open{display:block}
+.notif-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.notif-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s}
+.notif-item:hover{background:var(--bg)}
+.notif-item.unread{background:var(--accent-light)}
+.notif-title{font-size:13px;font-weight:500}
+.notif-msg{font-size:12px;color:var(--text2);margin-top:2px}
+.notif-time{font-size:10px;color:var(--text3);margin-top:3px}
+
+/* Plan selector */
+.plan-card{border:1px solid var(--border);border-radius:var(--r2);padding:14px;cursor:pointer;transition:.2s;margin-bottom:10px}
+.plan-card:hover,.plan-card.selected{border-color:var(--accent);background:var(--accent-light)}
+.plan-card.selected .plan-radio{background:var(--accent);border-color:var(--accent)}
+
+/* Review stars */
+.star-input{display:flex;gap:6px;font-size:24px;cursor:pointer}
+.star-input span{color:var(--bg3);transition:.15s}
+.star-input span.lit{color:#E67E22}
+
+/* Upload zone */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:.2s}
+.upload-zone:hover{border-color:var(--accent);background:var(--accent-light)}
+
+/* Map embed placeholder */
+.map-ph{background:var(--bg2);border-radius:var(--r);height:200px;display:flex;align-items:center;justify-content:center;font-size:36px;border:1px solid var(--border)}
+
+/* Toast */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--text);color:#fff;padding:12px 18px;border-radius:var(--r2);font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:var(--sh2);animation:slideIn .3s ease}
+.toast.success{background:var(--accent)}
+.toast.error{background:var(--red)}
+@keyframes slideIn{from{transform:translateX(120px);opacity:0}to{transform:none;opacity:1}}
+
+/* Loading */
+.loading{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--text2);font-size:14px;gap:10px}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;color:var(--text2)}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.5}
+.empty-title{font-family:var(--font);font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px}
+
+/* Utilities */
+.flex{display:flex}.items-center{align-items:center}.gap4{gap:4px}.gap8{gap:8px}.gap12{gap:12px}.gap16{gap:16px}
+.justify-between{justify-content:space-between}.flex1{flex:1}.flex-col{flex-direction:column}
+.text-right{text-align:right}.text-center{text-align:center}
+.muted{color:var(--text2)}.small{font-size:12px}.bold{font-weight:600}
+.accent{color:var(--accent)}.danger{color:var(--red)}.gold{color:var(--gold)}
+.mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}.mt24{margin-top:24px}
+.mb4{margin-bottom:4px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}
+.hidden{display:none!important}
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+@media(max-width:768px){
+  .sidebar{width:0;overflow:hidden}
+  .main{margin-left:0}
+  .grid3,.grid4,.grid5{grid-template-columns:1fr 1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .form-row,.form-row3{grid-template-columns:1fr}
+  .content{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<div id="toast-container" class="toast-container"></div>
+
+<!-- AUTH PAGES (shown when not logged in) -->
+<div id="auth-page" class="auth-wrap hidden">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div style="font-size:36px;margin-bottom:8px">🏢</div>
+      <div class="auth-title">SBSMS</div>
+      <div style="font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase">Smart Business Service Management</div>
+    </div>
+    <div class="auth-tabs" id="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" onclick="switchTab('register')">Register</div>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="login-form">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" id="l-email" type="email" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="l-pass" type="password" placeholder="••••••••"/>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;color:var(--text2)">
+          <input type="checkbox"/> Remember me
+        </label>
+        <span style="font-size:13px;color:var(--accent);cursor:pointer">Forgot password?</span>
+      </div>
+      <button class="btn btn-primary w100 btn-lg" onclick="doLogin()">Sign In →</button>
+      <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text2)">
+        Demo: <strong>admin@sbsms.com</strong> / <strong>admin123</strong>
+      </div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="register-form" class="hidden">
+      <div class="form-group">
+        <label class="form-label">I am a</label>
+        <div class="role-select">
+          <div class="role-option active" id="role-customer" onclick="selectRole('customer')">
+            <div class="role-icon">👤</div><div class="role-label">Customer</div>
+          </div>
+          <div class="role-option" id="role-owner" onclick="selectRole('owner')">
+            <div class="role-icon">🏢</div><div class="role-label">Business Owner</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="r-name" placeholder="Anjali Sharma"/></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="r-phone" placeholder="+91 9876543210"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email Address</label><input class="form-input" id="r-email" type="email" placeholder="you@example.com"/></div>
+      <div class="form-group"><label class="form-label">City</label>
+        <select class="form-select" id="r-city">
+          <option value="">Select City</option>
+          <option>Mumbai</option><option>Pune</option><option>Bangalore</option>
+          <option>Delhi</option><option>Sangli</option><option>Surat</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="r-pass" type="password" placeholder="Min 8 characters"/></div>
+      <button class="btn btn-primary w100 btn-lg" onclick="doRegister()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="app hidden">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-brand">SBSMS</div>
+      <div class="sb-tag">Smart Business Platform</div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-av">U</div>
+      <div>
+        <div class="sb-uname" id="sb-name">User</div>
+        <div class="sb-urole" id="sb-role">customer</div>
+      </div>
+    </div>
+
+    <div id="nav-customer">
+      <div class="sb-section">Explore</div>
+      <div class="sb-item active" onclick="nav('home')"><span class="sb-icon">🏠</span>Home</div>
+      <div class="sb-item" onclick="nav('browse')"><span class="sb-icon">🔍</span>Browse Services</div>
+      <div class="sb-section">My Account</div>
+      <div class="sb-item" onclick="nav('my-bookings')"><span class="sb-icon">📅</span>My Bookings<span class="sb-badge" id="bk-badge" style="display:none">0</span></div>
+      <div class="sb-item" onclick="nav('my-payments')"><span class="sb-icon">💳</span>My Payments</div>
+    </div>
+
+    <div id="nav-owner" class="hidden">
+      <div class="sb-section">Owner Panel</div>
+      <div class="sb-item active" onclick="nav('owner-dash')"><span class="sb-icon">📊</span>Dashboard</div>
+      <div class="sb-item" onclick="nav('my-services')"><span class="sb-icon">🏢</span>My Services</div>
+      <div class="sb-item" onclick="nav('add-service')"><span class="sb-icon">➕</span>Add Service</div>
+      <div class="sb-item" onclick="nav('owner-bookings')"><span class="sb-icon">✅</span>Manage Bookings<span class="sb-badge" id="ob-badge" style="display:none">0</span></div>
+      <div class="sb-item" onclick="nav('owner-payments')"><span class="sb-icon">💰</span>Payments</div>
+    </div>
+
+    <div id="nav-admin" class="hidden">
+      <div class="sb-section">Admin Panel</div>
+      <div class="sb-item active" onclick="nav('admin-dash')"><span class="sb-icon">🛡️</span>Dashboard</div>
+      <div class="sb-item" onclick="nav('admin-users')"><span class="sb-icon">👥</span>Manage Users</div>
+      <div class="sb-item" onclick="nav('admin-services')"><span class="sb-icon">🔐</span>Verify Services<span class="sb-badge" id="vs-badge" style="display:none">0</span></div>
+    </div>
+
+    <div class="sb-footer">
+      <div class="sb-item" onclick="doLogout()" style="border-left:none;padding:8px 0"><span class="sb-icon">🚪</span><span style="font-size:13px">Sign Out</span></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="main-area">
+    <div class="topbar">
+      <div class="tb-left">
+        <button class="tb-toggle" onclick="toggleSidebar()">☰</button>
+        <div class="tb-title" id="page-title">Home</div>
+      </div>
+      <div class="tb-right" style="position:relative">
+        <button class="tb-btn" onclick="toggleNotif()" id="notif-btn">
+          🔔<span class="tb-notif-dot" id="notif-dot" style="display:none"></span>
+        </button>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-head">
+            <span style="font-weight:600;font-size:14px">Notifications</span>
+            <button class="btn btn-ghost btn-xs" onclick="markAllRead()">Mark all read</button>
+          </div>
+          <div id="notif-list"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+        <div class="tb-avatar" id="tb-av">U</div>
+      </div>
+    </div>
+    <div class="content" id="page-content">
+      <div class="loading"><div class="spinner"></div> Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE & API
+// ═══════════════════════════════════════════════════════════
+const API = '/api';
+let token = localStorage.getItem('sbsms_token');
+let user  = JSON.parse(localStorage.getItem('sbsms_user') || 'null');
+let selectedRole = 'customer';
+let currentPage  = '';
+
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (body)  opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'Error');
+  return d;
+}
+
+function toast(msg, type='success') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type==='success'?'✓':type==='error'?'✕':'ℹ'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════
+function init() {
+  if (token && user) {
+    showApp();
+    nav(user.role === 'admin' ? 'admin-dash' : user.role === 'owner' ? 'owner-dash' : 'home');
+  } else {
+    showAuth();
+  }
+}
+
+function showAuth() {
+  document.getElementById('auth-page').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+
+function showApp() {
+  document.getElementById('auth-page').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('sb-av').textContent  = user.name[0].toUpperCase();
+  document.getElementById('tb-av').textContent  = user.name[0].toUpperCase();
+  document.getElementById('sb-name').textContent = user.name;
+  document.getElementById('sb-role').textContent = user.role;
+  // Show correct nav
+  document.getElementById('nav-customer').classList.toggle('hidden', user.role !== 'customer');
+  document.getElementById('nav-owner').classList.toggle('hidden',   user.role !== 'owner');
+  document.getElementById('nav-admin').classList.toggle('hidden',   user.role !== 'admin');
+  loadNotifications();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+}
+function selectRole(r) {
+  selectedRole = r;
+  document.getElementById('role-customer').classList.toggle('active', r==='customer');
+  document.getElementById('role-owner').classList.toggle('active', r==='owner');
+}
+
+async function doLogin() {
+  try {
+    const email = document.getElementById('l-email').value;
+    const pass  = document.getElementById('l-pass').value;
+    const res = await api('POST', '/auth/login', { email, password: pass });
+    token = res.token; user = res.user;
+    localStorage.setItem('sbsms_token', token);
+    localStorage.setItem('sbsms_user', JSON.stringify(user));
+    showApp();
+    nav(user.role === 'admin' ? 'admin-dash' : user.role === 'owner' ? 'owner-dash' : 'home');
+    toast('Welcome back, ' + user.name + '!');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function doRegister() {
+  try {
+    const res = await api('POST', '/auth/register', {
+      name: document.getElementById('r-name').value,
+      email: document.getElementById('r-email').value,
+      password: document.getElementById('r-pass').value,
+      phone: document.getElementById('r-phone').value,
+      city: document.getElementById('r-city').value,
+      role: selectedRole
+    });
+    token = res.token; user = res.user;
+    localStorage.setItem('sbsms_token', token);
+    localStorage.setItem('sbsms_user', JSON.stringify(user));
+    showApp();
+    nav(user.role === 'owner' ? 'owner-dash' : 'home');
+    toast('Account created! Welcome, ' + user.name);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function doLogout() {
+  token = null; user = null;
+  localStorage.removeItem('sbsms_token');
+  localStorage.removeItem('sbsms_user');
+  showAuth();
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+const pageTitles = {
+  home:'Home','browse':'Browse Services','service-detail':'Service Detail',
+  'book':'Book Service','my-bookings':'My Bookings','my-payments':'My Payments',
+  'owner-dash':'Owner Dashboard','my-services':'My Services','add-service':'Add New Service',
+  'owner-bookings':'Manage Bookings','owner-payments':'Payment Management',
+  'admin-dash':'Admin Dashboard','admin-users':'Manage Users','admin-services':'Verify Services'
+};
+
+function nav(page, data) {
+  currentPage = page;
+  document.getElementById('page-title').textContent = pageTitles[page] || page;
+  document.querySelectorAll('.sb-item').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('onclick')?.includes(`'${page}'`));
+  });
+  const pc = document.getElementById('page-content');
+  pc.innerHTML = `<div class="loading"><div class="spinner"></div> Loading…</div>`;
+  pages[page]?.(data);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+  document.getElementById('main-area').classList.toggle('expanded');
+}
+
+// ═══════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════
+async function loadNotifications() {
+  try {
+    const notifs = await api('GET', '/owner/notifications');
+    const unread = notifs.filter(n=>!n.is_read);
+    const dot = document.getElementById('notif-dot');
+    dot.style.display = unread.length ? 'block' : 'none';
+    const list = document.getElementById('notif-list');
+    if (!notifs.length) { list.innerHTML = `<div class="loading muted">No notifications</div>`; return; }
+    list.innerHTML = notifs.map(n => `
+      <div class="notif-item ${n.is_read?'':'unread'}">
+        <div class="notif-title">${n.title}</div>
+        <div class="notif-msg">${n.message}</div>
+        <div class="notif-time">${timeAgo(n.created_at)}</div>
+      </div>`).join('');
+  } catch {}
+}
+
+function toggleNotif() {
+  document.getElementById('notif-panel').classList.toggle('open');
+}
+async function markAllRead() {
+  await api('PATCH', '/owner/notifications/read');
+  loadNotifications();
+  document.getElementById('notif-panel').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if (!document.getElementById('notif-btn').contains(e.target))
+    document.getElementById('notif-panel').classList.remove('open');
+});
+
+function timeAgo(d) {
+  const s = Math.floor((Date.now() - new Date(d))/1000);
+  if (s<60) return 'just now';
+  if (s<3600) return Math.floor(s/60)+'m ago';
+  if (s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—'; }
+function fmtMoney(n) { return '₹' + (Number(n)||0).toLocaleString('en-IN'); }
+function badgeStatus(s) {
+  const m = {approved:'badge-green',active:'badge-green',paid:'badge-green',
+             pending:'badge-gold',partial:'badge-gold',
+             rejected:'badge-red',cancelled:'badge-red',overdue:'badge-red',
+             completed:'badge-blue'};
+  return `<span class="badge ${m[s]||'badge-neutral'}">${s}</span>`;
+}
+function catEmoji(c) { return {gym:'🏋️',hostel:'🏠',hotel:'🏨',restaurant:'🍽️',coaching:'🎓'}[c]||'🏢'; }
+function catThumb(c) { return `svc-thumb-${c||'gym'}`; }
+
+// ═══════════════════════════════════════════════════════════
+// PAGES
+// ═══════════════════════════════════════════════════════════
+const pages = {
+
+// ─── HOME ───────────────────────────────────────────────────
+async home() {
+  const pc = document.getElementById('page-content');
+  const cats = await api('GET','/services/meta/counts').catch(()=>[]);
+  const featured = await api('GET','/services?sort=rating').catch(()=>[]);
+  const top6 = featured.slice(0,6);
+  pc.innerHTML = `
+    <div class="hero">
+      <div class="hero-title">Find the Best Services Near You 🌟</div>
+      <div class="hero-sub">Gyms, Hostels, Hotels, Coaching & more — all verified, all in one place</div>
+      <div class="hero-search">
+        <select class="form-select" id="h-city" style="max-width:180px;background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)">
+          <option value="">📍 All Cities</option>
+          ${['Mumbai','Pune','Bangalore','Delhi','Sangli','Surat','Hyderabad'].map(c=>`<option>${c}</option>`).join('')}
+        </select>
+        <input class="form-input" id="h-q" placeholder="Search gyms, hotels, coaching..." style="flex:1;min-width:200px;background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)"/>
+        <button class="btn btn-primary" onclick="pages.browse({city:document.getElementById('h-city').value,q:document.getElementById('h-q').value});nav('browse')">Search</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:28px">
+      <div class="sec-head"><div class="sec-title">Service Categories</div></div>
+      <div class="grid5">
+        ${[['🏋️','Gym','gym'],['🏠','Hostel','hostel'],['🏨','Hotel','hotel'],['🍽️','Restaurant','restaurant'],['🎓','Coaching','coaching']].map(([e,n,c])=>{
+          const count = cats.find(x=>x.category===c)?.total||0;
+          return `<div class="card-sm" style="text-align:center;cursor:pointer;transition:.2s" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="nav('browse');pages.browse({category:'${c}'})">
+            <div style="font-size:36px;margin-bottom:8px">${e}</div>
+            <div style="font-weight:600;font-size:14px">${n}</div>
+            <div class="muted small mt4">${count} listed</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="sec-head">
+      <div class="sec-title">Featured Services</div>
+      <button class="btn btn-outline btn-sm" onclick="nav('browse')">View All →</button>
+    </div>
+    ${top6.length ? `
+    <div class="grid3">
+      ${top6.map(s=>svcCard(s)).join('')}
+    </div>` : `<div class="empty"><div class="empty-icon">🏢</div><div class="empty-title">No services yet</div><p class="muted">Be the first to list your business!</p></div>`}
+
+    <div style="margin-top:32px">
+      <div class="grid4">
+        ${[['✅','Verified Businesses','Every listing is admin-approved for quality.'],
+           ['🔔','Smart Reminders','Automated alerts for payments and bookings.'],
+           ['💳','Flexible Payments','Cash, UPI, and online payment options.'],
+           ['📊','Live Tracking','Real-time booking and payment status.']]
+          .map(([e,t,d])=>`<div class="card-sm"><div style="font-size:24px;margin-bottom:8px">${e}</div><div class="bold mb4" style="font-size:14px">${t}</div><div class="muted small">${d}</div></div>`).join('')}
+      </div>
+    </div>`;
+},
+
+// ─── BROWSE ─────────────────────────────────────────────────
+async browse(prefill={}) {
+  const pc = document.getElementById('page-content');
+  const cat  = prefill.category || '';
+  const city = prefill.city || '';
+  const q    = prefill.q || '';
+  let services = await api('GET', `/services?category=${cat}&city=${city}&search=${q}`).catch(()=>[]);
+  pc.innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <input class="form-input" id="br-q" placeholder="🔍  Search services…" value="${q}" style="flex:1;min-width:200px"/>
+      <select class="form-select" id="br-city" style="width:160px">
+        <option value="">All Cities</option>
+        ${['Mumbai','Pune','Bangalore','Delhi','Sangli','Surat'].map(c=>`<option ${c===city?'selected':''}>${c}</option>`).join('')}
+      </select>
+      <select class="form-select" id="br-sort" style="width:160px">
+        <option value="">Latest</option><option value="rating">Top Rated</option><option value="price">Price ↑</option>
+      </select>
+      <button class="btn btn-primary" onclick="doBrowse()">Search</button>
+    </div>
+    <div class="chip-bar" id="cat-chips">
+      ${['','gym','hostel','hotel','restaurant','coaching'].map((c,i)=>`<div class="chip ${c===cat?'active':''}" onclick="setcat('${c}')">${c?catEmoji(c)+' '+c.charAt(0).toUpperCase()+c.slice(1):'All'}</div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span class="muted small"><strong id="svc-count" style="color:var(--text)">${services.length}</strong> services found</span>
+    </div>
+    <div class="grid3" id="svc-grid">
+      ${services.length ? services.map(s=>svcCard(s)).join('') : `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No services found</div></div>`}
+    </div>`;
+
+  window._browseServices = services;
+
+  window.doBrowse = async () => {
+    const q2 = document.getElementById('br-q').value;
+    const c2 = document.getElementById('br-city').value;
+    const s2 = document.getElementById('br-sort').value;
+    const all = await api('GET',`/services?search=${q2}&city=${c2}&sort=${s2}&category=${window._browseCategory||''}`).catch(()=>[]);
+    document.getElementById('svc-grid').innerHTML = all.length ? all.map(s=>svcCard(s)).join('') : `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">Nothing found</div></div>`;
+    document.getElementById('svc-count').textContent = all.length;
+  };
+  window.setcat = async (c) => {
+    window._browseCategory = c;
+    document.querySelectorAll('#cat-chips .chip').forEach(el => el.classList.toggle('active', el.textContent.toLowerCase().includes(c||'all')));
+    doBrowse();
+  };
+},
+
+// ─── SERVICE DETAIL ──────────────────────────────────────────
+async 'service-detail'(id) {
+  const pc = document.getElementById('page-content');
+  try {
+    const [svc, reviews] = await Promise.all([
+      api('GET', `/services/${id}`),
+      api('GET', `/reviews/${id}`)
+    ]);
+    const d = svc.detail || {};
+    const plans = [
+      ['Monthly', svc.price_monthly, 'monthly'],
+      ['Quarterly', svc.price_quarterly, 'quarterly'],
+      ['Half-Yearly', svc.price_halfyearly, 'halfyearly'],
+      ['Yearly', svc.price_yearly, 'yearly'],
+    ].filter(([,p])=>p);
+    let selectedPlan = plans[0];
+    const facilities = JSON.parse(svc.facilities||'[]');
+
+    pc.innerHTML = `
+      <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+        <div style="flex:2;min-width:300px">
+          <div class="svc-thumb ${catThumb(svc.category)}" style="height:220px;border-radius:var(--r);margin-bottom:16px;font-size:72px">
+            ${catEmoji(svc.category)}
+            <span class="verified-badge">✓ Verified</span>
+          </div>
+
+          <div class="card mb16">
+            <div class="flex items-center gap8 mb12">
+              <div style="font-family:var(--font);font-size:22px;font-weight:700">${svc.name}</div>
+              <span class="badge badge-green">${svc.category}</span>
+            </div>
+            <div class="muted small mb8">📍 ${svc.address || svc.city}</div>
+            ${svc.opening_time ? `<div class="muted small mb8">⏰ ${svc.opening_time} – ${svc.closing_time}</div>`:''}
+            <p class="mt12" style="line-height:1.7;color:var(--text2);font-size:14px">${svc.description||'No description provided.'}</p>
+          </div>
+
+          ${facilities.length ? `
+          <div class="card mb16">
+            <div class="sec-title mb12">Facilities & Amenities</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              ${facilities.map(f=>`<span class="badge badge-blue" style="font-size:13px;padding:5px 12px">${f}</span>`).join('')}
+            </div>
+          </div>` : ''}
+
+          ${svc.category==='gym' && d.trainer_count ? `
+          <div class="card mb16">
+            <div class="sec-title mb12">Gym Details</div>
+            <div class="grid3">
+              <div><div class="muted small">Trainers</div><div class="bold">${d.trainer_count}</div></div>
+              <div><div class="muted small">Morning Batch</div><div class="bold">${d.batch_morning||'—'}</div></div>
+              <div><div class="muted small">Evening Batch</div><div class="bold">${d.batch_evening||'—'}</div></div>
+            </div>
+          </div>` : ''}
+
+          <div class="card mb16">
+            <div class="sec-head">
+              <div class="sec-title">Reviews & Ratings</div>
+              ${user ? `<button class="btn btn-outline btn-sm" onclick="openReviewModal(${svc.id})">Write Review</button>` : ''}
+            </div>
+            <div class="flex gap16 mb16">
+              <div style="text-align:center">
+                <div style="font-family:var(--font);font-size:40px;font-weight:700">${Number(svc.avg_rating||0).toFixed(1)}</div>
+                <div style="color:#E67E22">${'★'.repeat(Math.round(svc.avg_rating||0))}${'☆'.repeat(5-Math.round(svc.avg_rating||0))}</div>
+                <div class="muted small">${svc.total_reviews} reviews</div>
+              </div>
+              <div style="flex:1">
+                ${[5,4,3,2,1].map(n=>{
+                  const cnt = reviews.filter(r=>r.rating===n).length;
+                  const pct = reviews.length ? Math.round(cnt/reviews.length*100) : 0;
+                  return `<div class="flex items-center gap8 mb4"><span class="small muted" style="width:12px">${n}</span>
+                    <div class="progress flex1"><div class="progress-fill" style="width:${pct}%;background:#E67E22"></div></div>
+                    <span class="small muted" style="width:28px">${pct}%</span></div>`;
+                }).join('')}
+              </div>
+            </div>
+            ${reviews.length ? reviews.slice(0,5).map(r=>`
+              <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px">
+                <div class="flex items-center gap8 mb4">
+                  <div class="tl-dot" style="background:var(--accent);color:#fff;font-size:12px;font-weight:700">${r.reviewer_name[0]}</div>
+                  <div><div style="font-weight:500;font-size:13px">${r.reviewer_name}</div>
+                  <div style="color:#E67E22;font-size:12px">${'★'.repeat(r.rating)}</div></div>
+                  <span class="muted small" style="margin-left:auto">${fmtDate(r.created_at)}</span>
+                </div>
+                <p class="muted small">${r.comment||''}</p>
+                ${r.owner_reply ? `<div class="mt8 small" style="background:var(--accent-light);padding:8px;border-radius:6px;border-left:3px solid var(--accent)"><strong>Owner reply:</strong> ${r.owner_reply}</div>`:''}
+              </div>`).join('') : `<div class="muted small text-center" style="padding:20px">No reviews yet. Be the first!</div>`}
+          </div>
+        </div>
+
+        <!-- BOOKING SIDEBAR -->
+        <div style="flex:1;min-width:280px;position:sticky;top:80px">
+          <div class="card">
+            <div style="font-family:var(--font);font-size:18px;font-weight:700;margin-bottom:4px">${svc.name}</div>
+            <div class="muted small mb12">by ${svc.owner_name}</div>
+            <div class="muted small bold mb8">SELECT PLAN</div>
+            <div id="plan-list">
+              ${plans.map(([label, price, val], i) => `
+              <div class="plan-card ${i===0?'selected':''}" onclick="selectPlan(this,'${val}',${price},'${label}')">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <div style="font-weight:600;font-size:14px">${label}</div>
+                    <div class="muted small">per ${val==='monthly'?'month':val==='quarterly'?'3 months':val==='halfyearly'?'6 months':'year'}</div>
+                  </div>
+                  <div style="font-family:var(--font);font-size:18px;font-weight:700;color:var(--accent)">${fmtMoney(price)}</div>
+                </div>
+              </div>`).join('')}
+            </div>
+            ${user ? `<button class="btn btn-primary w100 btn-lg mt12" onclick="nav('book');pages.book({service:${JSON.stringify(svc).replace(/'/g,"&#39;")}})">Book Now 📅</button>` :
+             `<button class="btn btn-outline w100 mt12" onclick="showAuth()">Login to Book</button>`}
+            <div class="divider"></div>
+            <div class="flex items-center gap8">
+              <div class="tl-dot" style="background:var(--accent2);color:#fff;font-size:11px;font-weight:700">${svc.owner_name[0]}</div>
+              <div><div style="font-size:13px;font-weight:500">${svc.owner_name}</div>
+              <div class="muted small">📞 ${svc.owner_phone||svc.phone||'—'}</div></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    window.selectPlan = (el, val, price, label) => {
+      document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedPlan = [label, price, val];
+    };
+  } catch(e) {
+    pc.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Could not load service</div><p class="muted">${e.message}</p></div>`;
+  }
+},
+
+// ─── BOOK ────────────────────────────────────────────────────
+async book(data={}) {
+  const pc = document.getElementById('page-content');
+  const svc = data.service || {};
+  const plans = [
+    ['Monthly', svc.price_monthly, 'monthly'],
+    ['Quarterly', svc.price_quarterly, 'quarterly'],
+    ['Half-Yearly', svc.price_halfyearly, 'halfyearly'],
+    ['Yearly', svc.price_yearly, 'yearly'],
+  ].filter(([,p])=>p);
+  pc.innerHTML = `
+    <div style="max-width:640px;margin:0 auto">
+      <div class="card mb16" style="background:var(--accent-light);border-color:var(--accent2)">
+        <div class="flex items-center gap12">
+          <div style="font-size:40px">${catEmoji(svc.category)}</div>
+          <div><div style="font-weight:700;font-family:var(--font);font-size:16px">${svc.name}</div>
+          <div class="muted small">📍 ${svc.city} &nbsp;|&nbsp; ${svc.category}</div></div>
+        </div>
+      </div>
+      <div class="card mb16">
+        <div class="sec-title mb16">Your Details</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="b-name" value="${user.name}"/></div>
+          <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="b-phone" placeholder="+91 9876543210"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="b-email" value="${user.email}"/></div>
+      </div>
+      <div class="card mb16">
+        <div class="sec-title mb16">Booking Preferences</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Select Plan</label>
+            <select class="form-select" id="b-plan" onchange="updateAmount()">
+              ${plans.map(([l,p,v])=>`<option value="${v}" data-price="${p}">${l} — ${fmtMoney(p)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" id="b-date" type="date" value="${new Date().toISOString().slice(0,10)}"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Preferred Slot</label>
+          <select class="form-select" id="b-slot">
+            <option>Morning (6 AM – 10 AM)</option><option>Afternoon (11 AM – 2 PM)</option>
+            <option>Evening (5 PM – 9 PM)</option><option>Flexible</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Special Requirements (optional)</label>
+          <textarea class="form-textarea" id="b-note" placeholder="e.g. Personal trainer required, ground floor room, etc."></textarea>
+        </div>
+      </div>
+      <div class="card mb16">
+        <div class="sec-title mb12">Order Summary</div>
+        ${[['Service', svc.name], ['Location', svc.city], ['Owner', svc.owner_name]].map(([k,v])=>`
+        <div class="flex justify-between" style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span class="muted">${k}</span><span class="bold">${v||'—'}</span>
+        </div>`).join('')}
+        <div class="flex justify-between mt12" style="font-family:var(--font);font-size:17px;font-weight:700">
+          <span>Total Amount</span>
+          <span class="accent" id="b-total">${fmtMoney(plans[0]?.[1]||0)}</span>
+        </div>
+      </div>
+      <div class="flex gap10">
+        <button class="btn btn-outline flex1" onclick="history.back()">← Back</button>
+        <button class="btn btn-primary flex1 btn-lg" onclick="submitBooking(${svc.id})">Submit Request ✓</button>
+      </div>
+    </div>`;
+
+  window.updateAmount = () => {
+    const sel = document.getElementById('b-plan');
+    const price = sel.options[sel.selectedIndex].dataset.price;
+    document.getElementById('b-total').textContent = fmtMoney(price);
+  };
+
+  window.submitBooking = async (sid) => {
+    try {
+      const sel = document.getElementById('b-plan');
+      const price = sel.options[sel.selectedIndex].dataset.price;
+      await api('POST', '/bookings', {
+        service_id: sid,
+        plan: sel.value,
+        start_date: document.getElementById('b-date').value,
+        slot: document.getElementById('b-slot').value,
+        special_request: document.getElementById('b-note').value,
+        amount: price
+      });
+      toast('Booking request submitted! The owner will review it shortly.');
+      nav('my-bookings');
+    } catch(e) { toast(e.message, 'error'); }
+  };
+},
+
+// ─── MY BOOKINGS ─────────────────────────────────────────────
+async 'my-bookings'() {
+  const pc = document.getElementById('page-content');
+  const bookings = await api('GET', '/bookings/my').catch(()=>[]);
+  const counts = {total:bookings.length, active:0, pending:0, cancelled:0};
+  bookings.forEach(b => {
+    if (b.status==='approved') counts.active++;
+    if (b.status==='pending') counts.pending++;
+    if (b.status==='cancelled'||b.status==='rejected') counts.cancelled++;
+  });
+  document.getElementById('bk-badge').textContent = counts.pending;
+  document.getElementById('bk-badge').style.display = counts.pending ? 'inline' : 'none';
+
+  pc.innerHTML = `
+    <div class="stat-grid">
+      ${[['Total',counts.total,'#'],['Active',counts.active,'var(--accent)'],['Pending',counts.pending,'var(--gold)'],['Cancelled',counts.cancelled,'var(--red)']].map(([l,v,c])=>`
+      <div class="stat-card"><div class="stat-top" style="background:${c}"></div>
+      <div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join('')}
+    </div>
+    <div class="chip-bar" id="bk-chips">
+      ${['All','pending','approved','completed','rejected'].map((f,i)=>`<div class="chip ${i===0?'active':''}" onclick="filterBk('${f}',this)">${f.charAt(0).toUpperCase()+f.slice(1)}</div>`).join('')}
+    </div>
+    <div id="bk-list" style="display:flex;flex-direction:column;gap:12px">
+      ${bookings.length ? bookings.map(b=>bkCard(b,false)).join('') : `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No bookings yet</div><button class="btn btn-primary mt12" onclick="nav('browse')">Browse Services</button></div>`}
+    </div>`;
+
+  window._allBk = bookings;
+  window.filterBk = (f, el) => {
+    document.querySelectorAll('#bk-chips .chip').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+    const list = f==='All' ? window._allBk : window._allBk.filter(b=>b.status===f);
+    document.getElementById('bk-list').innerHTML = list.length ? list.map(b=>bkCard(b,false)).join('') : `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Nothing here</div></div>`;
+  };
+},
+
+// ─── MY PAYMENTS ─────────────────────────────────────────────
+async 'my-payments'() {
+  const pc = document.getElementById('page-content');
+  const payments = await api('GET','/payments/my').catch(()=>[]);
+  const total = payments.reduce((a,p)=>a+Number(p.amount),0);
+  const paid  = payments.reduce((a,p)=>a+Number(p.paid_amount),0);
+  const pending = payments.reduce((a,p)=>a+Number(p.pending_amount||0),0);
+  pc.innerHTML = `
+    <div class="stat-grid">
+      ${[[fmtMoney(total),'Total Amount'],[ fmtMoney(paid),'Amount Paid'],[fmtMoney(pending),'Pending']].map(([v,l],i)=>`
+      <div class="stat-card"><div class="stat-top" style="background:${['#aaa','var(--accent)','var(--gold)'][i]}"></div>
+      <div class="stat-label">${l}</div><div class="stat-val" style="font-size:20px">${v}</div></div>`).join('')}
+      <div class="stat-card"><div class="stat-top" style="background:var(--blue)"></div>
+      <div class="stat-label">Transactions</div><div class="stat-val">${payments.length}</div></div>
+    </div>
+    <div class="card">
+      <div class="sec-title mb16">Payment History</div>
+      <div class="tbl-wrap"><table class="tbl">
+        <tr><th>Service</th><th>Ref</th><th>Amount</th><th>Paid</th><th>Due</th><th>Method</th><th>Status</th><th>Due Date</th></tr>
+        ${payments.length ? payments.map(p=>`
+        <tr>
+          <td style="font-weight:500">${p.service_name}</td>
+          <td class="muted small">${p.booking_ref}</td>
+          <td>${fmtMoney(p.amount)}</td>
+          <td class="accent">${fmtMoney(p.paid_amount)}</td>
+          <td class="${Number(p.pending_amount)>0?'gold':''}">${fmtMoney(p.pending_amount)}</td>
+          <td class="muted">${p.method||'—'}</td>
+          <td>${badgeStatus(p.status)}</td>
+          <td class="muted small">${fmtDate(p.due_date)}</td>
+        </tr>`).join('') : `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text2)">No payment records</td></tr>`}
+      </table></div>
+    </div>`;
+},
+
+// ─── OWNER DASHBOARD ─────────────────────────────────────────
+async 'owner-dash'() {
+  const pc = document.getElementById('page-content');
+  const [dash, bookings, payments] = await Promise.all([
+    api('GET','/owner/dashboard').catch(()=>{}),
+    api('GET','/bookings/owner').catch(()=>[]),
+    api('GET','/payments/owner').catch(()=>[])
+  ]);
+  const pending = bookings.filter(b=>b.status==='pending');
+  document.getElementById('ob-badge').textContent = pending.length;
+  document.getElementById('ob-badge').style.display = pending.length ? 'inline':'none';
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+  const barVals = [35,55,48,72,65,85];
+
+  pc.innerHTML = `
+    <div class="stat-grid">
+      ${[[fmtMoney(dash?.revenue||0),'Total Revenue','var(--accent)'],
+         [dash?.clients||0,'Total Clients','var(--blue)'],
+         [fmtMoney(dash?.pending_payments||0),'Pending Payments','var(--gold)'],
+         [pending.length,'New Requests','var(--red)']].map(([v,l,c])=>`
+      <div class="stat-card"><div class="stat-top" style="background:${c}"></div>
+      <div class="stat-label">${l}</div><div class="stat-val" style="font-size:${typeof v==='string'?'18':'28'}px">${v}</div></div>`).join('')}
+    </div>
+    <div class="grid2 mb16">
+      <div class="card">
+        <div class="sec-head"><div class="sec-title">Monthly Revenue</div><span class="muted small">Last 6 months</span></div>
+        <div class="bar-wrap">
+          ${months.map((m,i)=>`<div class="bar-col">
+            <div class="bar-fill" style="height:${barVals[i]}%;background:var(--accent);border-radius:4px 4px 0 0"></div>
+            <div class="bar-lbl">${m}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-head"><div class="sec-title">Recent Requests</div><button class="btn btn-ghost btn-sm" onclick="nav('owner-bookings')">View All →</button></div>
+        ${pending.slice(0,4).map(b=>`
+        <div class="tl-item">
+          <div class="tl-dot" style="background:var(--accent);color:#fff;font-weight:700;font-size:12px">${b.customer_name[0]}</div>
+          <div class="tl-body"><div class="tl-title">${b.customer_name} <span class="muted">→ ${b.service_name}</span></div>
+          <div class="tl-sub">${b.plan} | ${fmtMoney(b.amount)}</div></div>
+          ${badgeStatus(b.status)}
+        </div>`).join('') || `<div class="muted small text-center" style="padding:20px">No pending requests</div>`}
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="sec-head"><div class="sec-title">Pending Payments</div><button class="btn btn-ghost btn-sm" onclick="nav('owner-payments')">Update →</button></div>
+        ${payments.filter(p=>p.status!=='paid').slice(0,4).map(p=>`
+        <div class="tl-item">
+          <div class="tl-dot" style="background:var(--red-light);color:var(--red);font-size:12px">💰</div>
+          <div class="tl-body"><div class="tl-title">${p.customer_name}</div>
+          <div class="tl-sub">${p.service_name}</div></div>
+          <span class="gold bold">${fmtMoney(p.pending_amount)}</span>
+        </div>`).join('') || `<div class="muted small text-center" style="padding:20px">All payments up to date ✓</div>`}
+      </div>
+      <div class="card">
+        <div class="sec-head"><div class="sec-title">Quick Actions</div></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-primary w100" onclick="nav('add-service')">➕ Add New Service</button>
+          <button class="btn btn-outline w100" onclick="nav('owner-bookings')">✅ Review Bookings (${pending.length})</button>
+          <button class="btn btn-outline w100" onclick="nav('owner-payments')">💰 Update Payments</button>
+          <button class="btn btn-outline w100" onclick="nav('my-services')">🏢 View My Services</button>
+        </div>
+      </div>
+    </div>`;
+},
+
+// ─── MY SERVICES ─────────────────────────────────────────────
+async 'my-services'() {
+  const pc = document.getElementById('page-content');
+  const all = await api('GET','/services').catch(()=>[]);
+  const mine = all.filter(s=>s.owner_id===user.id);
+  pc.innerHTML = `
+    <div class="sec-head mb16">
+      <div class="sec-title">My Services (${mine.length})</div>
+      <button class="btn btn-primary" onclick="nav('add-service')">➕ Add Service</button>
+    </div>
+    <div class="grid3">
+      ${mine.length ? mine.map(s=>`
+      <div class="svc-card" onclick="nav('service-detail');pages['service-detail'](${s.id})">
+        <div class="svc-thumb ${catThumb(s.category)}">${catEmoji(s.category)}</div>
+        <div class="svc-body">
+          <div class="svc-name">${s.name}</div>
+          <div class="svc-meta">📍 ${s.city}</div>
+          <div class="flex justify-between items-center mt8">
+            ${badgeStatus(s.status)}
+            <div class="svc-stars">★ ${Number(s.avg_rating||0).toFixed(1)}</div>
+          </div>
+        </div>
+      </div>`).join('')
+      : `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏢</div><div class="empty-title">No services listed yet</div><button class="btn btn-primary mt12" onclick="nav('add-service')">Add Your First Service</button></div>`}
+    </div>`;
+},
+
+// ─── ADD SERVICE ─────────────────────────────────────────────
+async 'add-service'() {
+  const pc = document.getElementById('page-content');
+  let selCat = 'gym';
+  pc.innerHTML = `
+    <div style="max-width:700px;margin:0 auto">
+      <div class="card mb16">
+        <div class="sec-title mb14">Service Category</div>
+        <div class="grid5" id="cat-sel">
+          ${[['🏋️','Gym','gym'],['🏠','Hostel','hostel'],['🏨','Hotel','hotel'],['🍽️','Restaurant','restaurant'],['🎓','Coaching','coaching']].map(([e,n,c],i)=>`
+          <div class="card-sm" id="cat-${c}" style="text-align:center;cursor:pointer;transition:.2s;${i===0?'border-color:var(--accent);background:var(--accent-light)':''}" onclick="pickCat('${c}')">
+            <div style="font-size:28px;margin-bottom:6px">${e}</div><div style="font-size:13px;font-weight:600">${n}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="card mb16">
+        <div class="sec-title mb16">Basic Information</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Business Name *</label><input class="form-input" id="as-name" placeholder="e.g. PowerFit Gym"/></div>
+          <div class="form-group"><label class="form-label">City *</label>
+            <select class="form-select" id="as-city">
+              ${['Mumbai','Pune','Bangalore','Delhi','Sangli','Surat'].map(c=>`<option>${c}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Full Address *</label><input class="form-input" id="as-addr" placeholder="Street, Area, City, PIN"/></div>
+        <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="as-desc" placeholder="Describe your service…"></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Contact Phone</label><input class="form-input" id="as-ph" placeholder="+91 9876543210"/></div>
+          <div class="form-group"><label class="form-label">Business Email</label><input class="form-input" id="as-em" type="email" placeholder="info@business.com"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Opening Time</label><input class="form-input" id="as-open" type="time" value="06:00"/></div>
+          <div class="form-group"><label class="form-label">Closing Time</label><input class="form-input" id="as-close" type="time" value="22:00"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Capacity (people)</label><input class="form-input" id="as-cap" type="number" placeholder="150"/></div>
+      </div>
+      <div class="card mb16">
+        <div class="sec-title mb16">Pricing Plans (₹)</div>
+        <div class="grid4">
+          ${[['Monthly','as-pm'],['Quarterly','as-pq'],['Half-Yearly','as-ph'],['Yearly','as-py']].map(([l,id])=>`
+          <div><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">${l}</div>
+          <input class="form-input" id="${id}" type="number" placeholder="e.g. 999"/></div>`).join('')}
+        </div>
+      </div>
+      <div class="card mb16">
+        <div class="sec-title mb12">Facilities (select all that apply)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="facilities-list">
+          ${['Wi-Fi','AC','Parking','Locker','Shower','CCTV','Cafeteria','Generator','Pool','Elevator'].map(f=>`
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:7px 14px;border:1px solid var(--border);border-radius:20px;transition:.15s" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="if(!this.querySelector('input').checked)this.style.borderColor='var(--border)'">
+            <input type="checkbox" value="${f}" onchange="this.closest('label').style.background=this.checked?'var(--accent-light)':'';this.closest('label').style.borderColor=this.checked?'var(--accent)':'var(--border)'"/> ${f}
+          </label>`).join('')}
+        </div>
+      </div>
+      <div class="flex gap10">
+        <button class="btn btn-outline flex1" onclick="nav('my-services')">Cancel</button>
+        <button class="btn btn-primary flex1 btn-lg" onclick="submitService()">Submit for Verification ✓</button>
+      </div>
+    </div>`;
+
+  window.pickCat = (c) => {
+    selCat = c;
+    document.querySelectorAll('#cat-sel .card-sm').forEach(el => {
+      el.style.borderColor = 'var(--border)'; el.style.background = 'var(--surface)';
+    });
+    const el = document.getElementById(`cat-${c}`);
+    el.style.borderColor = 'var(--accent)'; el.style.background = 'var(--accent-light)';
+  };
+
+  window.submitService = async () => {
+    const facilities = [...document.querySelectorAll('#facilities-list input:checked')].map(i=>i.value);
+    try {
+      await api('POST', '/services', {
+        name: document.getElementById('as-name').value,
+        category: selCat,
+        city: document.getElementById('as-city').value,
+        address: document.getElementById('as-addr').value,
+        description: document.getElementById('as-desc').value,
+        phone: document.getElementById('as-ph').value,
+        email: document.getElementById('as-em').value,
+        opening_time: document.getElementById('as-open').value,
+        closing_time: document.getElementById('as-close').value,
+        capacity: document.getElementById('as-cap').value,
+        price_monthly: document.getElementById('as-pm').value,
+        price_quarterly: document.getElementById('as-pq').value,
+        price_halfyearly: document.getElementById('as-ph').value,
+        price_yearly: document.getElementById('as-py').value,
+        facilities
+      });
+      toast('Service submitted for admin verification!');
+      nav('my-services');
+    } catch(e) { toast(e.message, 'error'); }
+  };
+},
+
+// ─── OWNER BOOKINGS ──────────────────────────────────────────
+async 'owner-bookings'() {
+  const pc = document.getElementById('page-content');
+  const bookings = await api('GET','/bookings/owner').catch(()=>[]);
+  pc.innerHTML = `
+    <div class="stat-grid">
+      ${[['Pending',bookings.filter(b=>b.status==='pending').length,'var(--gold)'],
+         ['Approved',bookings.filter(b=>b.status==='approved').length,'var(--accent)'],
+         ['Rejected',bookings.filter(b=>b.status==='rejected').length,'var(--red)'],
+         ['Total',bookings.length,'#666']].map(([l,v,c])=>`
+      <div class="stat-card"><div class="stat-top" style="background:${c}"></div>
+      <div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="sec-title mb16">All Booking Requests</div>
+      <div class="tbl-wrap"><table class="tbl">
+        <tr><th>Client</th><th>Service</th><th>Plan</th><th>Dates</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+        ${bookings.length ? bookings.map(b=>`
+        <tr>
+          <td><div class="flex items-center gap8">
+            <div class="tl-dot" style="background:var(--accent);color:#fff;font-size:11px;font-weight:700">${b.customer_name[0]}</div>
+            <div><div style="font-weight:500">${b.customer_name}</div>
+            <div class="muted small">${b.customer_phone||b.customer_email}</div></div>
+          </div></td>
+          <td style="font-weight:500">${b.service_name}</td>
+          <td><span class="badge badge-neutral">${b.plan}</span></td>
+          <td class="muted small">${fmtDate(b.start_date)} →<br>${fmtDate(b.end_date)}</td>
+          <td class="bold accent">${fmtMoney(b.amount)}</td>
+          <td>${badgeStatus(b.status)}</td>
+          <td>
+            ${b.status==='pending' ? `
+            <div class="flex gap4">
+              <button class="btn btn-success btn-xs" onclick="actBooking(${b.id},'approved')">✓ Approve</button>
+              <button class="btn btn-danger btn-xs" onclick="actBooking(${b.id},'rejected')">✕ Reject</button>
+            </div>` : `<button class="btn btn-ghost btn-xs">View</button>`}
+          </td>
+        </tr>`).join('') : `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text2)">No bookings yet</td></tr>`}
+      </table></div>
+    </div>`;
+
+  window.actBooking = async (id, status) => {
+    try {
+      await api('PATCH', `/bookings/${id}/status`, { status });
+      toast(`Booking ${status}!`);
+      pages['owner-bookings']();
+    } catch(e) { toast(e.message, 'error'); }
+  };
+},
+
+// ─── OWNER PAYMENTS ──────────────────────────────────────────
+async 'owner-payments'() {
+  const pc = document.getElementById('page-content');
+  const payments = await api('GET','/payments/owner').catch(()=>[]);
+  const total   = payments.reduce((a,p)=>a+Number(p.paid_amount),0);
+  const pending = payments.reduce((a,p)=>a+Number(p.pending_amount||0),0);
+  pc.innerHTML = `
+    <div class="stat-grid">
+      ${[[fmtMoney(total),'Total Collected','var(--accent)'],[fmtMoney(pending),'Total Pending','var(--gold)'],
+         [payments.filter(p=>p.status==='paid').length,'Fully Paid','var(--blue)'],[payments.length,'Total Records','#666']].map(([v,l,c])=>`
+      <div class="stat-card"><div class="stat-top" style="background:${c}"></div>
+      <div class="stat-label">${l}</div><div class="stat-val" style="font-size:${typeof v==='string'?'18':'28'}px">${v}</div></div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="sec-title mb16">Client Payment Status</div>
+      <div class="tbl-wrap"><table class="tbl">
+        <tr><th>Client</th><th>Service</th><th>Total</th><th>Paid</th><th>Pending</th><th>Method</th><th>Status</th><th>Action</th></tr>
+        ${payments.length ? payments.map(p=>`
+        <tr>
+          <td style="font-weight:500">${p.customer_name}</td>
+          <td class="muted">${p.service_name}</td>
+          <td>${fmtMoney(p.amount)}</td>
+          <td class="accent">${fmtMoney(p.paid_amount)}</td>
+          <td class="${Number(p.pending_amount)>0?'gold bold':''}">${fmtMoney(p.pending_amount)}</td>
+          <td class="muted">${p.method||'—'}</td>
+          <td>${badgeStatus(p.status)}</td>
+          <td>${p.status!=='paid' ? `<button class="btn btn-success btn-xs" onclick="markPaid(${p.id})">Mark Paid</button>` : '<span class="muted small">—</span>'}</td>
+        </tr>`).join('') : `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text2)">No payment records</td></tr>`}
+      </table></div>
+    </div>`;
+
+  window.markPaid = async (id) => {
+    try {
+      await api('PATCH', `/payments/${id}/mark-paid`, { method:'cash' });
+      toast('Payment marked as received!');
+      pages['owner-payments']();
+    } catch(e) { toast(e.message, 'error'); }
+  };
+},
+
+// ─── ADMIN DASHBOARD ─────────────────────────────────────────
+async 'admin-dash'() {
+  const pc = document.getElementById('page-content');
+  const [dash, services] = await Promise.all([
+    api('GET','/admin/dashboard').catch(()=>{}),
+    api('GET','/admin/services').catch(()=>[])
+  ]);
+  const pending = services.filter(s=>s.status==='pending');
+  document.getElementById('vs-badge').textContent = pending.length;
+  document.getElementById('vs-badge').style.display = pending.length ? 'inline':'none';
+  const months=['Jan','Feb','Mar','Apr','May','Jun'];
+  const vals=[28,45,52,68,74,95];
+
+  pc.innerHTML = `
+    <div class="stat-grid">
+      ${[[dash?.customers||0,'Customers','var(--blue)'],[dash?.owners||0,'Business Owners','var(--accent)'],
+         [dash?.pending||0,'Pending Verify','var(--gold)'],[fmtMoney(dash?.revenue||0),'Total Revenue','var(--red)']].map(([v,l,c])=>`
+      <div class="stat-card"><div class="stat-top" style="background:${c}"></div>
+      <div class="stat-label">${l}</div><div class="stat-val" style="font-size:${typeof v==='string'?'18':'28'}px">${v}</div></div>`).join('')}
+    </div>
+    <div class="grid2 mb16">
+      <div class="card">
+        <div class="sec-head"><div class="sec-title">Platform Growth</div></div>
+        <div class="bar-wrap">
+          ${months.map((m,i)=>`<div class="bar-col">
+            <div class="bar-fill" style="height:${vals[i]}%;background:var(--blue);border-radius:4px 4px 0 0"></div>
+            <div class="bar-lbl">${m}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-head"><div class="sec-title">Category Distribution</div></div>
+        ${(dash?.categories||[]).map(c=>`
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-size:13px;width:90px;font-weight:500">${catEmoji(c.category)} ${c.category}</span>
+          <div class="progress flex1"><div class="progress-fill" style="width:${Math.min(c.n*10,100)}%;background:var(--accent)"></div></div>
+          <span class="bold small accent">${c.n}</span>
+        </div>`).join('') || `<div class="muted small text-center" style="padding:20px">No approved services yet</div>`}
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-head"><div class="sec-title">Pending Verifications (${pending.length})</div><button class="btn btn-outline btn-sm" onclick="nav('admin-services')">View All →</button></div>
+      <div class="tbl-wrap"><table class="tbl">
+        <tr><th>Service</th><th>Category</th><th>Owner</th><th>City</th><th>Submitted</th><th>Actions</th></tr>
+        ${pending.slice(0,5).map(s=>`
+        <tr>
+          <td><div class="flex items-center gap8"><span>${catEmoji(s.category)}</span><span style="font-weight:500">${s.name}</span></div></td>
+          <td><span class="badge badge-neutral">${s.category}</span></td>
+          <td>${s.owner_name}</td>
+          <td class="muted">${s.city||'—'}</td>
+          <td class="muted small">${fmtDate(s.created_at)}</td>
+          <td><div class="flex gap4">
+            <button class="btn btn-success btn-xs" onclick="adminActSvc(${s.id},'approved')">✓ Approve</button>
+            <button class="btn btn-danger btn-xs" onclick="adminActSvc(${s.id},'rejected')">✕ Reject</button>
+          </div></td>
+        </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text2)">No pending services ✓</td></tr>`}
+      </table></div>
+    </div>`;
+
+  window.adminActSvc = async (id, status) => {
+    try { await api('PATCH',`/admin/services/${id}/status`,{status}); toast(`Service ${status}!`); pages['admin-dash'](); }
+    catch(e) { toast(e.message,'error'); }
+  };
+},
+
+// ─── ADMIN USERS ─────────────────────────────────────────────
+async 'admin-users'() {
+  const pc = document.getElementById('page-content');
+  const users = await api('GET','/admin/users').catch(()=>[]);
+  pc.innerHTML = `
+    <div class="stat-grid">
+      ${[['Total',users.length],['Customers',users.filter(u=>u.role==='customer').length],
+         ['Owners',users.filter(u=>u.role==='owner').length],['Blocked',users.filter(u=>!u.is_active).length]].map(([l,v])=>`
+      <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="sec-head mb16">
+        <div class="sec-title">All Users</div>
+        <input class="form-input" id="usr-q" placeholder="Search…" style="width:240px" oninput="filterUsers(this.value)"/>
+      </div>
+      <div class="tbl-wrap"><table class="tbl" id="usr-tbl">
+        <tr><th>User</th><th>Email</th><th>Role</th><th>City</th><th>Joined</th><th>Status</th><th>Action</th></tr>
+        ${users.map(u=>usrRow(u)).join('')}
+      </table></div>
+    </div>`;
+  window._users = users;
+  window.filterUsers = (q) => {
+    const f = window._users.filter(u=>u.name.toLowerCase().includes(q.toLowerCase())||u.email.toLowerCase().includes(q.toLowerCase()));
+    document.getElementById('usr-tbl').innerHTML = `<tr><th>User</th><th>Email</th><th>Role</th><th>City</th><th>Joined</th><th>Status</th><th>Action</th></tr>` + f.map(usrRow).join('');
+  };
+  window.toggleUser = async (id) => {
+    try { await api('PATCH',`/admin/users/${id}/toggle`); toast('User status updated'); pages['admin-users'](); }
+    catch(e) { toast(e.message,'error'); }
+  };
+},
+
+// ─── ADMIN SERVICES ──────────────────────────────────────────
+async 'admin-services'() {
+  const pc = document.getElementById('page-content');
+  const services = await api('GET','/admin/services').catch(()=>[]);
+  const pending = services.filter(s=>s.status==='pending');
+  pc.innerHTML = `
+    <div class="stat-grid">
+      ${[['Pending',pending.length,'var(--gold)'],['Approved',services.filter(s=>s.status==='approved').length,'var(--accent)'],
+         ['Rejected',services.filter(s=>s.status==='rejected').length,'var(--red)'],['Total',services.length,'#666']].map(([l,v,c])=>`
+      <div class="stat-card"><div class="stat-top" style="background:${c}"></div><div class="stat-label">${l}</div><div class="stat-val">${v}</div></div>`).join('')}
+    </div>
+    <div class="chip-bar" id="sv-chips">
+      ${['All','pending','approved','rejected'].map((f,i)=>`<div class="chip ${i===0?'active':''}" onclick="filterSvcs('${f}',this)">${f.charAt(0).toUpperCase()+f.slice(1)}</div>`).join('')}
+    </div>
+    <div id="svc-cards" style="display:flex;flex-direction:column;gap:12px">
+      ${services.map(s=>adminSvcRow(s)).join('')}
+    </div>`;
+  window._adminSvcs = services;
+  window.filterSvcs = (f, el) => {
+    document.querySelectorAll('#sv-chips .chip').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+    const list = f==='All' ? window._adminSvcs : window._adminSvcs.filter(s=>s.status===f);
+    document.getElementById('svc-cards').innerHTML = list.map(adminSvcRow).join('');
+  };
+  window.adminAct = async (id, status) => {
+    try { await api('PATCH',`/admin/services/${id}/status`,{status}); toast(`Service ${status}!`); pages['admin-services'](); }
+    catch(e) { toast(e.message,'error'); }
+  };
+}
+};
+
+// ═══════════════════════════════════════════════════════════
+// HELPER RENDERERS
+// ═══════════════════════════════════════════════════════════
+function svcCard(s) {
+  return `<div class="svc-card" onclick="nav('service-detail');pages['service-detail'](${s.id})">
+    <div class="svc-thumb ${catThumb(s.category)}" style="position:relative">${catEmoji(s.category)}
+      ${s.status==='approved'?`<span class="verified-badge">✓ Verified</span>`:''}
+    </div>
+    <div class="svc-body">
+      <div class="flex justify-between items-center mb4">
+        <div class="svc-name">${s.name}</div>
+        <span class="badge badge-neutral" style="font-size:10px">${s.category}</span>
+      </div>
+      <div class="svc-meta">📍 ${s.city||s.address||'—'}</div>
+      <div class="flex justify-between items-center mt8">
+        <div class="svc-price">${s.price_monthly ? fmtMoney(s.price_monthly)+'/mo' : 'View Plans'}</div>
+        <div class="svc-stars">★ ${Number(s.avg_rating||0).toFixed(1)}</div>
+      </div>
+      <div class="muted small mt4">by ${s.owner_name||'Owner'}</div>
+    </div>
+  </div>`;
+}
+
+function bkCard(b, isOwner) {
+  return `<div class="bk-card">
+    <div class="bk-icon">${catEmoji(b.category)}</div>
+    <div style="flex:1">
+      <div class="flex justify-between items-start">
+        <div><div style="font-weight:600;font-size:14px">${b.service_name}</div>
+        <div class="muted small">📍 ${b.city||'—'} | ${b.plan}</div></div>
+        ${badgeStatus(b.status)}
+      </div>
+      <div class="flex gap16 mt8 small">
+        <span class="muted">From: <strong style="color:var(--text)">${fmtDate(b.start_date)}</strong></span>
+        <span class="muted">To: <strong style="color:var(--text)">${fmtDate(b.end_date)}</strong></span>
+        <span class="muted">Amount: <strong class="accent">${fmtMoney(b.amount)}</strong></span>
+      </div>
+      ${b.special_request ? `<div class="muted small mt4">Note: ${b.special_request}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function usrRow(u) {
+  return `<tr>
+    <td><div class="flex items-center gap8">
+      <div class="tl-dot" style="background:${u.role==='owner'?'var(--accent2)':'var(--blue)'};color:#fff;font-size:11px;font-weight:700">${u.name[0]}</div>
+      <span style="font-weight:500">${u.name}</span>
+    </div></td>
+    <td class="muted">${u.email}</td>
+    <td><span class="badge ${u.role==='owner'?'badge-green':u.role==='admin'?'badge-blue':'badge-neutral'}">${u.role}</span></td>
+    <td class="muted">${u.city||'—'}</td>
+    <td class="muted small">${fmtDate(u.created_at)}</td>
+    <td><span class="badge ${u.is_active?'badge-green':'badge-red'}">${u.is_active?'Active':'Blocked'}</span></td>
+    <td><button class="btn btn-outline btn-xs" onclick="toggleUser(${u.id})">${u.is_active?'Block':'Unblock'}</button></td>
+  </tr>`;
+}
+
+function adminSvcRow(s) {
+  return `<div class="card" style="display:flex;gap:14px;align-items:center">
+    <div style="width:52px;height:52px;background:var(--bg2);border-radius:var(--r2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${catEmoji(s.category)}</div>
+    <div style="flex:1">
+      <div class="flex items-center gap8 mb4">
+        <span style="font-weight:600;font-size:14px">${s.name}</span>
+        <span class="badge badge-neutral">${s.category}</span>
+        ${badgeStatus(s.status)}
+      </div>
+      <div class="muted small">Owner: ${s.owner_name} &nbsp;|&nbsp; 📍 ${s.city||'—'} &nbsp;|&nbsp; ${s.price_monthly?fmtMoney(s.price_monthly)+'/mo':'No pricing'}</div>
+      <div class="muted small">Submitted: ${fmtDate(s.created_at)}</div>
+    </div>
+    <div class="flex gap6 flex-shrink:0">
+      <button class="btn btn-outline btn-sm" onclick="nav('service-detail');pages['service-detail'](${s.id})">👁 View</button>
+      ${s.status==='pending' ? `<button class="btn btn-success btn-sm" onclick="adminAct(${s.id},'approved')">✓ Approve</button><button class="btn btn-danger btn-sm" onclick="adminAct(${s.id},'rejected')">✕ Reject</button>` : ''}
+      ${s.status==='approved' ? `<button class="btn btn-outline btn-sm danger" onclick="adminAct(${s.id},'rejected')">Revoke</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function openReviewModal(sid) {
+  let rating = 5;
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  modal.innerHTML = `<div class="card" style="width:400px;max-width:95vw;box-shadow:var(--sh2)">
+    <div class="sec-title mb16">Write a Review</div>
+    <div class="star-input mb12" id="stars">
+      ${[1,2,3,4,5].map(n=>`<span class="${n<=5?'lit':''}" data-n="${n}" onclick="setRating(${n})">★</span>`).join('')}
+    </div>
+    <div class="form-group"><label class="form-label">Comment</label><textarea class="form-textarea" id="rv-comment" placeholder="Share your experience…"></textarea></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:16px"><input type="checkbox" id="rv-anon"/> Post anonymously</label>
+    <div class="flex gap10">
+      <button class="btn btn-outline flex1" onclick="this.closest('div[style]').remove()">Cancel</button>
+      <button class="btn btn-primary flex1" onclick="submitReview(${sid})">Submit Review</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  window.setRating = (n) => {
+    rating = n;
+    document.querySelectorAll('#stars span').forEach((s,i)=>s.classList.toggle('lit',i<n));
+  };
+  window.submitReview = async (sid) => {
+    try {
+      await api('POST','/reviews',{
+        service_id: sid,
+        rating,
+        comment: document.getElementById('rv-comment').value,
+        is_anonymous: document.getElementById('rv-anon').checked
+      });
+      modal.remove();
+      toast('Review submitted! Thank you.');
+      pages['service-detail'](sid);
+    } catch(e) { toast(e.message,'error'); }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
