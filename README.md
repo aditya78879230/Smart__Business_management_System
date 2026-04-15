@@ -1,1 +1,0 @@
-# Smart__Business_management_System
